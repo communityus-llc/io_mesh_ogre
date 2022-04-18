@@ -68,7 +68,7 @@ class ImportOgre(bpy.types.Operator, ImportHelper):
     keep_xml: BoolProperty(
             name="Keep XML",
             description="Keeps the XML file when converting from .MESH",
-            default=False,
+            default=True,
             )
     
     import_normals: BoolProperty(
@@ -188,7 +188,7 @@ class ExportOgre(bpy.types.Operator, ExportHelper):
     keep_xml: BoolProperty(
             name="Keep XML",
             description="Keeps the XML file when converting to .MESH",
-            default=False,
+            default=True,
             )
 
     apply_transform: BoolProperty(

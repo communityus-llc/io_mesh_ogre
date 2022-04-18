@@ -214,7 +214,8 @@ def xCollectMeshData(meshData, xmldoc, meshname, dirname, useNormals):
     return meshData
 
 def xCollectMaterialData(meshData, materialFiles, folder):
-
+    allMaterials = {}
+    MaterialDic = {}
     data = None
     if len(materialFiles)==1:
         materialFile = materialFiles[0]
@@ -232,34 +233,108 @@ def xCollectMaterialData(meshData, materialFiles, folder):
             # take only first material
             firstMaterial = meshData['submeshes'][0]['materialOrg']
 
-            materialFound = False
             for matFile in materialFiles:
                 try:
                     filein = open(matFile)
                 except:
                     print ("WARNING: Material: File", matFile, "not found!")
                     return 'None'
-                data = filein.readlines()
-                filein.close()
-                # try to find material name in file
-                materialFound = False
-                for line in data:
-                    if firstMaterial in line:
-                        materialFound = True
-                        break
+                # data = filein.readlines()
 
-                if materialFound:
+                # try to find material name in file
+
+                # TODO: material load
+                currMat = {}
+                currMatName = ''
+                while (line := filein.readline()):
+                    # print('Loading file', matFile)
+                    lineTrim = line.strip()
+                    if not len(lineTrim):
+                        continue
+                    if lineTrim.startswith('//'):
+                        continue
+
+                    if lineTrim.startswith('material'):
+                        lineSplit = lineTrim.split()
+                        currMat = {}
+                        currMatName = lineSplit[1].strip()
+                        continue
+
+                    if lineTrim == '{': # material
+                        while lineTrim != '}':
+                            line = filein.readline()
+                            lineTrim = line.strip()
+                            if not len(lineTrim):
+                                continue
+                            if lineTrim.startswith('//'):
+                                continue
+
+                            if (lineTrim == 'technique'):
+                                line = filein.readline()
+                                lineTrim = line.strip()
+                                if not len(lineTrim):
+                                    continue
+                                if lineTrim.startswith('//'):
+                                    continue
+
+                                if lineTrim == '{': # technique
+                                    while lineTrim != '}':
+                                        line = filein.readline()
+                                        lineTrim = line.strip()
+                                        if not len(lineTrim):
+                                            continue
+                                        if lineTrim.startswith('//'):
+                                            continue
+
+                                        if lineTrim == 'pass':
+                                            line = filein.readline()
+                                            lineTrim = line.strip()
+                                            if not len(lineTrim):
+                                                continue
+                                            if lineTrim.startswith('//'):
+                                                continue
+
+                                            if lineTrim == '{': # pass
+                                                while lineTrim != '}':
+                                                    line = filein.readline()
+                                                    lineTrim = line.strip()
+                                                    if not len(lineTrim):
+                                                        continue
+                                                    if lineTrim.startswith('//'):
+                                                        continue
+
+                                                    if lineTrim == 'texture_unit':
+                                                        line = filein.readline()
+                                                        lineTrim = line.strip()
+                                                        if not len(lineTrim):
+                                                            continue
+                                                        if lineTrim.startswith('//'):
+                                                            continue
+
+                                                        if lineTrim == '{': # texture_unit
+                                                            while lineTrim != '}':
+                                                                line = filein.readline()
+                                                                lineTrim = line.strip()
+                                                                if not len(lineTrim):
+                                                                    continue
+                                                                if lineTrim.startswith('//'):
+                                                                    continue
+
+                                                                if lineTrim.startswith('texture'):
+                                                                    lineSplit = lineTrim.split()
+                                                                    currMat['texture'] = os.path.join(folder, lineSplit[1].strip())
+                                                                    print('Loading', currMat['texture'])
+                    allMaterials[currMatName] = currMat
+
+                filein.close()
+
+                if firstMaterial in allMaterials:
                     print("Material '%s' found in '%s'" % (firstMaterial, matFile))
                     break
-            # material is not found at all
-            if not materialFound:
-                data = None
-
-    MaterialDic = {}
-    allMaterials = {}
 
     # store it into meshData
-    meshData['materials']= allMaterials
+    meshData['materials'] = allMaterials
+
     if SHOW_IMPORT_TRACE:
         print("allMaterials: %s" % allMaterials)
 
@@ -1180,6 +1255,15 @@ def load(operator, context, filepath, xml_converter=None, keep_xml=True, import_
     meshMaterials = []
     nameDotMaterial = onlyName + ".material"
     pathMaterial = os.path.join(folder, nameDotMaterial)
+
+    allMaterial = os.path.join(folder, "all.material")
+    if os.path.isfile(allMaterial):
+        meshMaterials.append(allMaterial)
+
+    sceneMaterial = os.path.join(folder, "Scene.material")
+    if os.path.isfile(sceneMaterial):
+        meshMaterials.append(sceneMaterial)
+
     if not os.path.isfile(pathMaterial):
         # search directory for .material
         for filename in os.listdir(folder):
