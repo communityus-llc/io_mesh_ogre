@@ -1,8 +1,8 @@
 # io_mesh_ogre
 
-This script imports/exports Ogre models into/from Blender.
+Imports/Exports Ogre models into/from Blender.
 
-- Based: https://www.lofigames.com/phpBB3/viewtopic.php?f=11&t=10732
+- Based on io_mesh_Kenshi: https://www.lofigames.com/phpBB3/viewtopic.php?f=11&t=10732
 - Based on the Torchlight Import/Export script by 'Dusho'
 
 ## Supported
