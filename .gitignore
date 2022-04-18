@@ -54,3 +54,4 @@ test files/
 
 OgreMain.dll
 OgreXMLConverter.exe
+__pycache__
