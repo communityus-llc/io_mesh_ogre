@@ -1159,7 +1159,6 @@ def load(operator, context, filepath, xml_converter=None, keep_xml=True, import_
 
     print("loading", str(filepath))
     
-
     filepath = filepath
     pathMeshXml = filepath
     # get the mesh as .xml file
@@ -1169,7 +1168,7 @@ def load(operator, context, filepath, xml_converter=None, keep_xml=True, import_
         else:
             operator.report( {'ERROR'}, "Failed to convert .mesh files to .xml")
             return {'CANCELLED'}
-    else:
+    elif not filepath.lower().endswith(".mesh.xml"):
         return {'CANCELLED'}
 
     folder = os.path.split(filepath)[0]
@@ -1211,27 +1210,29 @@ def load(operator, context, filepath, xml_converter=None, keep_xml=True, import_
                 operator.report( {'WARNING'}, "Selected armature has no OGRE data.")
         
         # there is valid skeleton link and existing file
-        elif skeletonFile!="None":
-            if convertXML(xml_converter, skeletonFile):
-                skeletonFileXml = skeletonFile + ".xml"
-
-                # parse .xml skeleton file
-                xDocSkeletonData = xOpenFile(skeletonFileXml)
-                if xDocSkeletonData != "None":
-                    xCollectBoneData(meshData, xDocSkeletonData)
-                    meshData['skeletonName'] = os.path.basename(skeletonFile[:-9])
-
-                    # parse animations
-                    if import_animations:
-                        fps = xAnalyseFPS(xDocSkeletonData)
-                        if(fps and round_frames):
-                            print("Setting FPS to", fps)
-                            bpy.context.scene.render.fps = fps
-                        xCollectAnimations(meshData, xDocSkeletonData, round_frames)
-
-            else:
+        elif skeletonFile != "None":
+            is_xml_skel = skeletonFile.lower().endswith(".xml") # .skeleton.xml
+            if is_xml_skel and not convertXML(xml_converter, skeletonFile):
                 operator.report( {'WARNING'}, "Failed to load linked skeleton")
                 print("Failed to load linked skeleton")
+
+            skeletonFileXml = skeletonFile
+            if not is_xml_skel:
+                skeletonFileXml += ".xml"
+
+            # parse .xml skeleton file
+            xDocSkeletonData = xOpenFile(skeletonFileXml)
+            if xDocSkeletonData != "None":
+                xCollectBoneData(meshData, xDocSkeletonData)
+                meshData['skeletonName'] = os.path.basename(skeletonFile[:-9])
+
+                # parse animations
+                if import_animations:
+                    fps = xAnalyseFPS(xDocSkeletonData)
+                    if(fps and round_frames):
+                        print("Setting FPS to", fps)
+                        bpy.context.scene.render.fps = fps
+                    xCollectAnimations(meshData, xDocSkeletonData, round_frames)
 
         # collect mesh data
         print("collecting mesh data...")

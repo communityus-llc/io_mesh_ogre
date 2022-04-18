@@ -102,7 +102,7 @@ class ImportOgre(bpy.types.Operator, ImportHelper):
             )
 
     filter_glob: StringProperty(
-            default="*.mesh;*.MESH;.xml;.XML",
+            default="*.mesh;*.MESH;*.mesh.xml;*.MESH.XML",
             options={'HIDDEN'},
             )
 
@@ -240,7 +240,7 @@ class ExportOgre(bpy.types.Operator, ExportHelper):
             )
 
     filter_glob: StringProperty(
-            default="*.mesh;*.MESH;.xml;.XML",
+            default="*.mesh;*.MESH;*.mesh.xml;*.MESH.XML",
             options={'HIDDEN'},
             )
 
@@ -342,11 +342,11 @@ class ExportKenshiCollision(bpy.types.Operator, ExportHelper):
 ##############################################################################################################################
 
 def menu_func_import(self, context):
-    self.layout.operator(ImportOgre.bl_idname, text="Kenshi OGRE (.mesh)")
+    self.layout.operator(ImportOgre.bl_idname, text="Ogre (.mesh, .mesh.xml)")
 
 
 def menu_func_export(self, context):
-    self.layout.operator(ExportOgre.bl_idname, text="Kenshi OGRE (.mesh)")
+    self.layout.operator(ExportOgre.bl_idname, text="Ogre (.mesh)")
 
 def menu_func_export_collision(self, context):
     self.layout.operator(ExportKenshiCollision.bl_idname, text="Kenshi Collision (.xml)")
