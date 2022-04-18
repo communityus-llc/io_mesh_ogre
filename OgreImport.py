@@ -327,6 +327,8 @@ def xCollectMaterialData(meshData, materialFiles, folder):
                                                                 lineSplit = lineTrim.split()
                                                                 currMat['texture'] = os.path.join(os.path.dirname(matFile), lineSplit[1].strip())
                                                                 print('Loading', currMat['texture'])
+                if 'texture' in currMat:
+                    currMat['imageNameOnly'] = os.path.basename(currMat['texture'])
                 allMaterials[currMatName] = currMat
 
             filein.close()
@@ -1040,6 +1042,7 @@ def bCreateSubMeshes(meshData, meshName):
                     tex = None
                     for lTex in bpy.data.textures:
                         if lTex.type == 'IMAGE':
+                            print('lTex.type: ', lTex.image.name)
                             if lTex.image.name == matInfo['imageNameOnly']:
                                 tex = lTex
                                 break;
