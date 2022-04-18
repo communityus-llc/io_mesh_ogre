@@ -1,12 +1,5 @@
 #!BPY
 
-"""
-Blender: 2.80
-Author: Someone
-History:<br>
-    * v0.1   (28-May-2019) - Export of box,sphere,capsule,mesh,convex hull from blender physics data for physx 3.4.0
-"""
-
 #from Blender import *
 from xml.dom import minidom
 import bpy

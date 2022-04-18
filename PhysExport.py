@@ -1,29 +1,5 @@
 #!BPY
 
-"""
-Name: 'OGRE for Kenshi (*.MESH)'
-Blender: 2.80
-Group: 'Import/Export'
-Tooltip: 'Import/Export Kenshi collision files'
-
-Author: Someone
-
-
-"""
-
-__author__ = "someone"
-__version__ = "0.9.0 07-May-2019"
-
-__bpydoc__ = """\
-Export collision information of blender rigid bodies to Kenshi xml collision files.
-
-History:<br>
-    * v0.4   (07-May-2019) - Switched to Blender 2.80 API
-    * v0.3   (08-Mar-2018) - Fixed capsule orientation
-    * v0.2   (06-Nov-2017) - Convex mesh calculated for export
-    * v0.1   (13-Oct-2017) - Export of box,sphere,capsule,mesh,convex hull from blender physics data
-"""
-
 #from Blender import *
 from xml.dom import minidom
 import bpy
