@@ -1,2 +1,2 @@
-# Blender-io_mesh_Kenshi
-Git repository for io_mesh_Kenshi
+# io_mesh_ogre
+Git repository for Blender 's io_mesh_Kenshi
