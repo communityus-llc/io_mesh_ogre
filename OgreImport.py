@@ -47,7 +47,7 @@ import os
 import subprocess
 
 SHOW_IMPORT_DUMPS = False
-SHOW_IMPORT_TRACE = False
+SHOW_IMPORT_TRACE = True
 DEFAULT_KEEP_XML = False
 # default blender version of script
 blender_version = 259
@@ -214,54 +214,65 @@ def xCollectMeshData(meshData, xmldoc, meshname, dirname, useNormals):
     return meshData
 
 def xCollectMaterialData(meshData, materialFiles, folder):
+    if SHOW_IMPORT_TRACE:
+        print("materialFiles: %s" % materialFiles)
+
     allMaterials = {}
     MaterialDic = {}
-    data = None
-    if len(materialFiles)==1:
-        materialFile = materialFiles[0]
-        try:
-            filein = open(materialFile)
-        except:
-            print ("WARNING: Material: File", materialFile, "not found!")
-            return 'None'
-        data = filein.readlines()
-        filein.close()
-    else:
-        #we have multiple material files, so check them for required materials
-        #pick one material from meshData
-        if(len(meshData['submeshes'])>0):
-            # take only first material
-            firstMaterial = meshData['submeshes'][0]['materialOrg']
 
-            for matFile in materialFiles:
-                try:
-                    filein = open(matFile)
-                except:
-                    print ("WARNING: Material: File", matFile, "not found!")
-                    return 'None'
-                # data = filein.readlines()
+    #we have multiple material files, so check them for required materials
+    #pick one material from meshData
+    if(len(meshData['submeshes']) > 0):
+        # take only first material
+        firstMaterial = meshData['submeshes'][0]['materialOrg']
 
-                # try to find material name in file
+        for matFile in materialFiles:
+            try:
+                filein = open(matFile)
+            except:
+                print ("WARNING: Material: File", matFile, "not found!")
+                return 'None'
 
-                # TODO: material load
-                currMat = {}
-                currMatName = ''
-                while (line := filein.readline()):
-                    # print('Loading file', matFile)
-                    lineTrim = line.strip()
-                    if not len(lineTrim):
-                        continue
-                    if lineTrim.startswith('//'):
-                        continue
+            # try to find material name in file
+            print('Loading file', matFile)
 
-                    if lineTrim.startswith('material'):
-                        lineSplit = lineTrim.split()
-                        currMat = {}
-                        currMatName = lineSplit[1].strip()
-                        continue
+            # TODO: material load
+            currMat = {}
+            currMatName = ''
+            while (line := filein.readline()):
+                lineTrim = line.strip()
+                if not len(lineTrim):
+                    continue
+                if lineTrim.startswith('//'):
+                    continue
 
-                    if lineTrim == '{': # material
-                        while lineTrim != '}':
+                if lineTrim.startswith('material'):
+                    lineSplit = lineTrim.split()
+                    currMat = {}
+                    currMatName = lineSplit[1].strip()
+                    continue
+
+                # TODO: load only one
+                if currMatName != firstMaterial:
+                    continue
+
+                if lineTrim == '{': # material
+                    while lineTrim != '}':
+                        line = filein.readline()
+                        lineTrim = line.strip()
+                        if not len(lineTrim):
+                            continue
+                        if lineTrim.startswith('//'):
+                            continue
+
+                        if (lineTrim.startswith('set_texture_alias')):
+                            lineSplit = lineTrim.split()
+                            # TODO: lineSplit[1] is texture content
+                            currMat['texture'] = os.path.join(os.path.dirname(matFile), lineSplit[2].strip())
+                            print('Loading', currMat['texture'])
+                            continue
+
+                        if (lineTrim == 'technique'):
                             line = filein.readline()
                             lineTrim = line.strip()
                             if not len(lineTrim):
@@ -269,16 +280,16 @@ def xCollectMaterialData(meshData, materialFiles, folder):
                             if lineTrim.startswith('//'):
                                 continue
 
-                            if (lineTrim == 'technique'):
-                                line = filein.readline()
-                                lineTrim = line.strip()
-                                if not len(lineTrim):
-                                    continue
-                                if lineTrim.startswith('//'):
-                                    continue
+                            if lineTrim == '{': # technique
+                                while lineTrim != '}':
+                                    line = filein.readline()
+                                    lineTrim = line.strip()
+                                    if not len(lineTrim):
+                                        continue
+                                    if lineTrim.startswith('//'):
+                                        continue
 
-                                if lineTrim == '{': # technique
-                                    while lineTrim != '}':
+                                    if lineTrim == 'pass':
                                         line = filein.readline()
                                         lineTrim = line.strip()
                                         if not len(lineTrim):
@@ -286,16 +297,16 @@ def xCollectMaterialData(meshData, materialFiles, folder):
                                         if lineTrim.startswith('//'):
                                             continue
 
-                                        if lineTrim == 'pass':
-                                            line = filein.readline()
-                                            lineTrim = line.strip()
-                                            if not len(lineTrim):
-                                                continue
-                                            if lineTrim.startswith('//'):
-                                                continue
+                                        if lineTrim == '{': # pass
+                                            while lineTrim != '}':
+                                                line = filein.readline()
+                                                lineTrim = line.strip()
+                                                if not len(lineTrim):
+                                                    continue
+                                                if lineTrim.startswith('//'):
+                                                    continue
 
-                                            if lineTrim == '{': # pass
-                                                while lineTrim != '}':
+                                                if lineTrim == 'texture_unit':
                                                     line = filein.readline()
                                                     lineTrim = line.strip()
                                                     if not len(lineTrim):
@@ -303,34 +314,26 @@ def xCollectMaterialData(meshData, materialFiles, folder):
                                                     if lineTrim.startswith('//'):
                                                         continue
 
-                                                    if lineTrim == 'texture_unit':
-                                                        line = filein.readline()
-                                                        lineTrim = line.strip()
-                                                        if not len(lineTrim):
-                                                            continue
-                                                        if lineTrim.startswith('//'):
-                                                            continue
+                                                    if lineTrim == '{': # texture_unit
+                                                        while lineTrim != '}':
+                                                            line = filein.readline()
+                                                            lineTrim = line.strip()
+                                                            if not len(lineTrim):
+                                                                continue
+                                                            if lineTrim.startswith('//'):
+                                                                continue
 
-                                                        if lineTrim == '{': # texture_unit
-                                                            while lineTrim != '}':
-                                                                line = filein.readline()
-                                                                lineTrim = line.strip()
-                                                                if not len(lineTrim):
-                                                                    continue
-                                                                if lineTrim.startswith('//'):
-                                                                    continue
+                                                            if lineTrim.startswith('texture'):
+                                                                lineSplit = lineTrim.split()
+                                                                currMat['texture'] = os.path.join(os.path.dirname(matFile), lineSplit[1].strip())
+                                                                print('Loading', currMat['texture'])
+                allMaterials[currMatName] = currMat
 
-                                                                if lineTrim.startswith('texture'):
-                                                                    lineSplit = lineTrim.split()
-                                                                    currMat['texture'] = os.path.join(folder, lineSplit[1].strip())
-                                                                    print('Loading', currMat['texture'])
-                    allMaterials[currMatName] = currMat
+            filein.close()
 
-                filein.close()
-
-                if firstMaterial in allMaterials:
-                    print("Material '%s' found in '%s'" % (firstMaterial, matFile))
-                    break
+            if firstMaterial in allMaterials:
+                print("Material '%s' found in '%s'" % (firstMaterial, matFile))
+                break
 
     # store it into meshData
     meshData['materials'] = allMaterials
@@ -1059,12 +1062,13 @@ def bCreateSubMeshes(meshData, meshName):
             # emmisive
             if 'emissive' in matInfo:
                 mat.emit = matInfo['emissive'][0]
-            mat.use_shadeless = True
-            mtex = mat.texture_slots.add()
-            if hasTexture:
-                mtex.texture = tex
-            mtex.texture_coords = 'UV'
-            mtex.use_map_color_diffuse = True
+            # TODO: fix
+            # mat.use_shadeless = True
+            # mtex = mat.texture_slots.add()
+            # if hasTexture:
+            #     mtex.texture = tex
+            # mtex.texture_coords = 'UV'
+            # mtex.use_map_color_diffuse = True
 
             # add material to object
             ob.data.materials.append(mat)
@@ -1263,6 +1267,11 @@ def load(operator, context, filepath, xml_converter=None, keep_xml=True, import_
     sceneMaterial = os.path.join(folder, "Scene.material")
     if os.path.isfile(sceneMaterial):
         meshMaterials.append(sceneMaterial)
+
+    backMaterial = os.path.join(os.path.dirname(os.path.dirname(filepath)), "Material", "all.material")
+    print("backMaterial", backMaterial)
+    if os.path.isfile(backMaterial):
+        meshMaterials.append(backMaterial)
 
     if not os.path.isfile(pathMaterial):
         # search directory for .material
