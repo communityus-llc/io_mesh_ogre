@@ -47,7 +47,7 @@ import os
 import subprocess
 
 SHOW_IMPORT_DUMPS = False
-SHOW_IMPORT_TRACE = True
+SHOW_IMPORT_TRACE = False
 DEFAULT_KEEP_XML = False
 # default blender version of script
 blender_version = 259
@@ -187,9 +187,10 @@ def xCollectMeshData(meshData, xmldoc, meshname, dirname, useNormals):
                 materialOrg = str(submesh.getAttributeNode('material').value)
                 # to avoid Blender naming limit problems
                 material = GetValidBlenderName(materialOrg)
+                print('Found submesh with material: ' + material)
                 sm = {}
-                sm['material']=material
-                sm['materialOrg']=materialOrg
+                sm['material'] = material
+                sm['materialOrg'] = materialOrg
                 for subnodes in submesh.childNodes:
                     if subnodes.localName == 'faces':
                         facescount = int(subnodes.getAttributeNode('count').value)
@@ -205,11 +206,10 @@ def xCollectMeshData(meshData, xmldoc, meshname, dirname, useNormals):
 
                     if hasSkeleton and subnodes.localName == 'boneassignments' and isSharedGeometry==False:
                         sm['geometry']['boneassignments']=xCollectBoneAssignments(meshData, subnodes)
-#
 
                 subMeshData.append(sm)
 
-    meshData['submeshes']=subMeshData
+    meshData['submeshes'] = subMeshData
 
     return meshData
 
@@ -218,7 +218,6 @@ def xCollectMaterialData(meshData, materialFiles, folder):
         print("materialFiles: %s" % materialFiles)
 
     allMaterials = {}
-    MaterialDic = {}
 
     #we have multiple material files, so check them for required materials
     #pick one material from meshData
@@ -327,6 +326,19 @@ def xCollectMaterialData(meshData, materialFiles, folder):
                                                                 lineSplit = lineTrim.split()
                                                                 currMat['texture'] = os.path.join(os.path.dirname(matFile), lineSplit[1].strip())
                                                                 print('Loading', currMat['texture'])
+                                                elif lineTrim == 'ambient':
+                                                    lineSplit = lineTrim.split()
+                                                    currMat['ambient'] = [float(lineSplit[1].strip()), float(lineSplit[2].strip()), float(lineSplit[3].strip())]
+                                                elif lineTrim == 'diffuse':
+                                                    lineSplit = lineTrim.split()
+                                                    currMat['diffuse'] = [float(lineSplit[1].strip()), float(lineSplit[2].strip()), float(lineSplit[3].strip())]
+                                                elif lineTrim == 'emissive':
+                                                    lineSplit = lineTrim.split()
+                                                    currMat['emissive'] = [float(lineSplit[1].strip()), float(lineSplit[2].strip()), float(lineSplit[3].strip())]
+                                                elif lineTrim == 'specular':
+                                                    lineSplit = lineTrim.split()
+                                                    currMat['specular'] = [float(lineSplit[1].strip()), float(lineSplit[2].strip()), float(lineSplit[3].strip()), float(lineSplit[4].strip())]
+
                 if 'texture' in currMat:
                     currMat['imageNameOnly'] = os.path.basename(currMat['texture'])
                 allMaterials[currMatName] = currMat
@@ -718,7 +730,7 @@ def bCreateAnimations(meshData):
         rig = meshData['rig']
         rig.animation_data_create()
         animdata = rig.animation_data
-        
+
         # calculate transformation matrices for translation
         mat = {}
         fix1 = Matrix([(1,0,0), (0,0,1), (0,-1,0)])
@@ -726,8 +738,7 @@ def bCreateAnimations(meshData):
         for bone in rig.pose.bones:
             if bone.parent: mat[bone.name] = fix2 @ bone.parent.matrix.to_3x3().transposed() @ bone.matrix.to_3x3()
             else: mat[bone.name] = fix1 @  bone.matrix.to_3x3()
-        
-        
+
         for name in sorted(meshData['animations'].keys(), reverse=True):
             action = bpy.data.actions.new(name)
             # action.use_fake_user = True   # Dont need this as we are adding them to the nla editor
@@ -806,7 +817,6 @@ def bCreateMesh(meshData, folder, name, filepath):
         fileWr.close()
 
 def bCreateSkeleton(meshData, name):
-
     if 'skeleton' not in meshData:
         return
     bonesData = meshData['skeleton']
@@ -973,7 +983,6 @@ def bMergeVertices(subMesh):
 
 
 def bCreateSubMeshes(meshData, meshName):
-
     allObjects = []
     submeshes = meshData['submeshes']
     scene = bpy.context.scene
@@ -1029,33 +1038,34 @@ def bCreateSubMeshes(meshData, meshName):
         #meshVertex_colors = me.tessface_vertex_colors
         #meshUV_textures = me.uv_textures
 
-        hasTexture = False
         # material for the submesh
         # Create image texture from image.
         if subMeshName in meshData['materials']:
             matInfo = meshData['materials'][subMeshName] # material data
+            tex = None
             if 'texture' in matInfo:
                 texturePath = matInfo['texture']
                 if texturePath:
-                    hasTexture = True
-                    # try to find among already loaded images
-                    tex = None
-                    for lTex in bpy.data.textures:
-                        if lTex.type == 'IMAGE':
-                            print('lTex.type: ', lTex.image.name)
-                            if lTex.image.name == matInfo['imageNameOnly']:
-                                tex = lTex
-                                break;
-                    if not tex:
-                        tex = bpy.data.textures.new('ColorTex', type = 'IMAGE')
+                    if not subMeshName in bpy.data.textures:
+                        print('Loading texture: %s' % texturePath)
+                        tex = bpy.data.textures.new(subMeshName, type = 'IMAGE')
                         tex.image = bpy.data.images.load(texturePath)
                         tex.use_alpha = True
+                    else:
+                        tex = bpy.data.textures[subMeshName]
 
             # Create shadeless material and MTex
-            mat = bpy.data.materials.new(subMeshName)
+            mat = None
+            if subMeshName in bpy.data.materials:
+                mat = bpy.data.materials[subMeshName]
+            else:
+                print('Loading mat: %s' % subMeshName)
+                mat = bpy.data.materials.new(subMeshName)
+
             # ambient
-            if 'ambient' in matInfo:
-                mat.ambient = matInfo['ambient'][0]
+            # TODO: not support blender 3.0
+            # if 'ambient' in matInfo:
+            #     mat.ambient = matInfo['ambient'][0]
             # diffuse
             if 'diffuse' in matInfo:
                 mat.diffuse_color = matInfo['diffuse']
@@ -1063,12 +1073,30 @@ def bCreateSubMeshes(meshData, meshName):
             if 'specular' in matInfo:
                 mat.specular_color = matInfo['specular']
             # emmisive
-            if 'emissive' in matInfo:
-                mat.emit = matInfo['emissive'][0]
+            # TODO: not support blender 3.0
+            # if 'emissive' in matInfo:
+            #     mat.emit = matInfo['emissive'][0]
             # TODO: fix
             # mat.use_shadeless = True
+            if tex:
+                mat.use_nodes = True
+                # TODO: add texture to mat
+                nodes = mat.node_tree.nodes
+                # Get a principled node
+                principled = next(n for n in nodes if n.type == 'BSDF_PRINCIPLED')
+                # Get the slot for 'base color'
+                base_color = principled.inputs['Base Color'] #Or principled.inputs[0]
+                # Get its default value (not the value from a possible link)
+                value = base_color.default_value
+                # Translate as color
+                print('mat base color', value )
+
+                # Get the link
+                link = base_color.links[0]
+                link_node = link.from_node
+                print('mat link', link_node.image.name )
             # mtex = mat.texture_slots.add()
-            # if hasTexture:
+            # if tex:
             #     mtex.texture = tex
             # mtex.texture_coords = 'UV'
             # mtex.use_map_color_diffuse = True

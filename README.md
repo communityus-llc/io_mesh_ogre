@@ -15,6 +15,7 @@ Imports/Exports Ogre models into/from Blender.
 * import/export of vertex colour (RGB)
 * import/export of vertex alpha (Uses second vertex colour layer called Alpha)
 * import/export of shape keys
+* import/export of material, texture
 * Calculation of tangents and binormals for export
 ```
 
@@ -31,6 +32,7 @@ Imports/Exports Ogre models into/from Blender.
 ## Changelogs
 
 ```
+* v0.9.2   (20-Apr-2022) - Support importing material
 * v0.9.1   (13-Sep-2019) - Fixed importing skeletons
 * v0.9.0   (07-May-2019) - Switched to Blender 2.80 API
 * v0.8.15  (17-Jul-2019) - Added option to import normals
