@@ -1062,44 +1062,42 @@ def bCreateSubMeshes(meshData, meshName):
                 print('Loading mat: %s' % subMeshName)
                 mat = bpy.data.materials.new(subMeshName)
 
-            # ambient
-            # TODO: not support blender 3.0
-            # if 'ambient' in matInfo:
-            #     mat.ambient = matInfo['ambient'][0]
-            # diffuse
-            if 'diffuse' in matInfo:
-                mat.diffuse_color = matInfo['diffuse']
-            # specular
-            if 'specular' in matInfo:
-                mat.specular_color = matInfo['specular']
-            # emmisive
-            # TODO: not support blender 3.0
-            # if 'emissive' in matInfo:
-            #     mat.emit = matInfo['emissive'][0]
-            # TODO: fix
-            # mat.use_shadeless = True
-            if tex:
-                mat.use_nodes = True
-                # TODO: add texture to mat
-                nodes = mat.node_tree.nodes
-                # Get a principled node
-                principled = next(n for n in nodes if n.type == 'BSDF_PRINCIPLED')
-                # Get the slot for 'base color'
-                base_color = principled.inputs['Base Color'] #Or principled.inputs[0]
-                # Get its default value (not the value from a possible link)
-                value = base_color.default_value
-                # Translate as color
-                print('mat base color', value )
+                # ambient
+                # TODO: not support blender 3.0
+                # if 'ambient' in matInfo:
+                #     mat.ambient = matInfo['ambient'][0]
+                # diffuse
+                if 'diffuse' in matInfo:
+                    mat.diffuse_color = matInfo['diffuse']
+                # specular
+                if 'specular' in matInfo:
+                    mat.specular_color = matInfo['specular']
+                # emmisive
+                # TODO: not support blender 3.0
+                # if 'emissive' in matInfo:
+                #     mat.emit = matInfo['emissive'][0]
+                # TODO: fix
+                # mat.use_shadeless = True
+                if tex:
+                    mat.use_nodes = True
+                    # TODO: add texture to mat
+                    nodes = mat.node_tree.nodes
+                    # Get a principled node
+                    principled = next(n for n in nodes if n.type == 'BSDF_PRINCIPLED')
+                    # Get the slot for 'base color'
+                    base_color = principled.inputs['Base Color'] #Or principled.inputs[0]
 
-                # Get the link
-                link = base_color.links[0]
-                link_node = link.from_node
-                print('mat link', link_node.image.name )
-            # mtex = mat.texture_slots.add()
-            # if tex:
-            #     mtex.texture = tex
-            # mtex.texture_coords = 'UV'
-            # mtex.use_map_color_diffuse = True
+                    # Get the link
+                    texImgNode = nodes.new('ShaderNodeTexImage')
+                    texImgNode.select = True
+                    texImgNode.image = tex.image
+                    nodes.active = texImgNode
+                    # mtex.texture_coords = 'UV'
+                    # mtex.use_map_color_diffuse = True
+
+                    # Link
+                    mat.node_tree.links.new(base_color, texImgNode.outputs['Color'])
+                    print('mat link ', base_color.links)
 
             # add material to object
             ob.data.materials.append(mat)
@@ -1210,8 +1208,10 @@ def bCreateSubMeshes(meshData, meshName):
     
     # forced view mode with textures
     #bpy.context.scene.game_settings.material_mode = 'GLSL'
-    #areas = bpy.context.screen.areas
-    #for area in areas:
+    # areas = bpy.context.screen.areas
+    # screen = bpy.data.screens['Layout']
+    # areas = screen.areas
+    # for area in areas:
     #    if area.type == 'VIEW_3D':
     #        area.spaces.active.viewport_shade='TEXTURED'
 

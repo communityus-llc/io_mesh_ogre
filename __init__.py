@@ -4,7 +4,7 @@ bl_info = {
     "name": "Ogre Tools",
     "author": "HadesD",
     "blender": (2, 80, 0),
-    "version": (0, 9, 2),
+    "version": (0, 9, 3),
     "location": "File > Import-Export",
     "description": ("Import-Export Ogre Model files, and export Ogre collision files."),
     "warning": "",
