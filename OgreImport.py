@@ -1051,6 +1051,7 @@ def bCreateSubMeshes(meshData, meshName):
                         tex = bpy.data.textures.new(subMeshName, type = 'IMAGE')
                         tex.image = bpy.data.images.load(texturePath)
                         tex.use_alpha = True
+                        # TODO: setting texture data
                     else:
                         tex = bpy.data.textures[subMeshName]
 
@@ -1080,7 +1081,6 @@ def bCreateSubMeshes(meshData, meshName):
                 # mat.use_shadeless = True
                 if tex:
                     mat.use_nodes = True
-                    # TODO: add texture to mat
                     nodes = mat.node_tree.nodes
                     # Get a principled node
                     principled = next(n for n in nodes if n.type == 'BSDF_PRINCIPLED')
@@ -1092,8 +1092,6 @@ def bCreateSubMeshes(meshData, meshName):
                     texImgNode.select = True
                     texImgNode.image = tex.image
                     nodes.active = texImgNode
-                    # mtex.texture_coords = 'UV'
-                    # mtex.use_map_color_diffuse = True
 
                     # Link
                     mat.node_tree.links.new(base_color, texImgNode.outputs['Color'])
